@@ -1,0 +1,119 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+float evaluateExpression(char* expression) {
+    int i;
+    float result;
+
+    for (i = 0; expression[i] != '\0'; i++) {
+        if (expression[i] == '(') {
+            int j = i + 1;
+            int count = 1;
+            while (expression[j] != '\0') {
+                if (expression[j] == '(') {
+                    count++;
+                } else if (expression[j] == ')') {
+                    count--;
+                    if (count == 0) {
+                        char* subexpression = malloc((j - i) * sizeof(char));
+                        strncpy(subexpression, expression + i + 1, j - i - 1);
+                        subexpression[j - i - 1] = '\0';
+                        result = evaluateExpression(subexpression);
+                        free(subexpression);
+                        break;
+                    }
+                }
+                j++;
+            }
+
+            char* newExpression = malloc((i + strlen(expression + j + 1) + 10) * sizeof(char));
+            strncpy(newExpression, expression, i);
+            sprintf(newExpression + i, "%f", result);
+            strcat(newExpression, expression + j + 1);
+
+            expression = newExpression;
+        }
+    }
+
+    for (i = 0; expression[i] != '\0'; i++) {
+        if (expression[i] == '^') {
+            float base = atof(expression + i - 1);
+            float exponent = atof(expression + i + 1);
+            result = pow(base, exponent);
+
+            char* newExpression = malloc((strlen(expression) - 2 + 10) * sizeof(char));
+            strncpy(newExpression, expression, i - 1);
+            sprintf(newExpression + i - 1, "%f", result);
+            strcat(newExpression, expression + i + 2);
+
+            expression = newExpression;
+            i = 0; 
+        }
+    }
+    for (i = 0; expression[i] != '\0'; i++) {
+        if (expression[i] == '*' || expression[i] == '/') {
+            char operator = expression[i];
+            float operand1 = atof(expression + i - 1);
+            float operand2 = atof(expression + i + 1);
+
+            if (operator == '*') {
+                result = operand1 * operand2;
+            } else if (operator == '/') {
+                if (operand2 != 0) {
+                    result = operand1 / operand2;
+                } else {
+                    printf("Error: Division by zero\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            char* newExpression = malloc((strlen(expression) - 2 + 10) * sizeof(char));
+            strncpy(newExpression, expression, i - 1);
+            sprintf(newExpression + i - 1, "%f", result);
+            strcat(newExpression, expression + i + 2);
+
+            expression = newExpression;
+            i = 0; 
+        }
+    }
+
+    for (i = 0; expression[i] != '\0'; i++) {
+        if (expression[i] == '+' || expression[i] == '-') {
+            char operator = expression[i];
+            float operand1 = atof(expression + i - 1);
+            float operand2 = atof(expression + i + 1);
+
+            if (operator == '+') {
+                result = operand1 + operand2;
+            } else if (operator == '-') {
+                result = operand1 - operand2;
+            }
+
+            char* newExpression = malloc((strlen(expression) - 2 + 10) * sizeof(char));
+            strncpy(newExpression, expression, i - 1);
+            sprintf(newExpression + i - 1, "%f", result);
+            strcat(newExpression, expression + i + 2);
+
+            expression = newExpression;
+            i = 0; 
+        }
+    }
+
+    return atof(expression);
+}
+
+int main() {
+    char expression[100];
+
+    printf("Enter an expression: ");
+    fgets(expression, sizeof(expression), stdin);
+
+    if (expression[strlen(expression) - 1] == '\n') {
+        expression[strlen(expression) - 1] = '\0';
+    }
+
+    float result = evaluateExpression(expression);
+    printf("Result: %f\n", result);
+
+    return 0;
+}
