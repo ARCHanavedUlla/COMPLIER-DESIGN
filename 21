@@ -1,0 +1,152 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Structure to represent a three-address code statement
+struct ThreeAddressCode {
+    char result;   // Temporary variable
+    char op;       // Operator
+    char arg1;     // Operand 1
+    char arg2;     // Operand 2
+};
+
+// Function to generate a temporary variable name
+char generateTempVar() {
+    static char tempVar = 't';
+    return tempVar++;
+}
+
+// Function to generate three-address code for the given expression
+void generateThreeAddressCode(const char *expression) {
+    struct ThreeAddressCode code[100];
+    int codeIndex = 0;
+
+    int i = 0;
+    while (expression[i] != '\0') {
+        if (expression[i] == '(' || expression[i] == ')' ||
+            expression[i] == '+' || expression[i] == '-' ||
+            expression[i] == '*' || expression[i] == '/') {
+
+            code[codeIndex].result = generateTempVar();
+            code[codeIndex].op = expression[i];
+
+            if (expression[i] != '(' && expression[i] != ')') {
+                code[codeIndex].arg1 = expression[i - 1];
+                code[codeIndex].arg2 = expression[i + 1];
+                i += 2;
+            } else {
+                code[codeIndex].arg1 = '\0';
+                code[codeIndex].arg2 = '\0';
+                i++;
+            }
+
+            codeIndex++;
+        } else {
+            i++;
+        }
+    }
+
+    // Display the generated three-address code
+    printf("\nGenerated Three-Address Code:\n");
+    for (int j = 0; j < codeIndex; j++) {
+        printf("%c = %c %c %c\n", code[j].result, code[j].arg1, code[j].op, code[j].arg2);
+    }
+}
+
+int main() {
+    char expression[100];
+
+    // Get the input expression from the user
+    printf("Enter the expression: ");
+    fgets(expression, sizeof(expression), stdin);
+
+    // Remove newline character from the input
+    for (int i = 0; expression[i] != '\0'; i++) {
+        if (expression[i] == '\n') {
+            expression[i] = '\0';
+            break;
+        }
+    }
+
+    // Generate and display three-address code
+    generateThreeAddressCode(expression);
+
+    return 0;
+}
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Structure to represent a symbol entry
+struct SymbolEntry {
+    char name[50];
+    int value;
+    struct SymbolEntry* next;
+};
+
+// Function to insert a symbol into the symbol table
+void insertSymbol(struct SymbolEntry** table, const char* name, int value) {
+    struct SymbolEntry* newEntry = (struct SymbolEntry*)malloc(sizeof(struct SymbolEntry));
+    if (newEntry == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(newEntry->name, name);
+    newEntry->value = value;
+    newEntry->next = *table;
+    *table = newEntry;
+
+    printf("Symbol '%s' with value %d inserted into the symbol table.\n", name, value);
+}
+
+// Function to search for a symbol in the symbol table
+struct SymbolEntry* searchSymbol(struct SymbolEntry* table, const char* name) {
+    while (table != NULL) {
+        if (strcmp(table->name, name) == 0) {
+            return table;
+        }
+        table = table->next;
+    }
+
+    return NULL; // Symbol not found
+}
+
+// Function to display the contents of the symbol table
+void displaySymbolTable(struct SymbolEntry* table) {
+    printf("\nSymbol Table:\n");
+    while (table != NULL) {
+        printf("Name: %s, Value: %d\n", table->name, table->value);
+        table = table->next;
+    }
+}
+
+int main() {
+    struct SymbolEntry* symbolTable = NULL;
+
+    // Insert symbols into the table
+    insertSymbol(&symbolTable, "x", 10);
+    insertSymbol(&symbolTable, "y", 20);
+    insertSymbol(&symbolTable, "z", 30);
+
+    // Display the initial symbol table
+    displaySymbolTable(symbolTable);
+
+    // Search for a symbol
+    const char* searchName = "y";
+    struct SymbolEntry* foundSymbol = searchSymbol(symbolTable, searchName);
+
+    if (foundSymbol != NULL) {
+        printf("\nSymbol '%s' found. Value: %d\n", searchName, foundSymbol->value);
+    } else {
+        printf("\nSymbol '%s' not found.\n", searchName);
+    }
+
+    // Clean up: Free memory allocated for the symbol table
+    while (symbolTable != NULL) {
+        struct SymbolEntry* temp = symbolTable;
+        symbolTable = symbolTable->next;
+        free(temp);
+    }
+
+    return 0;
+}
