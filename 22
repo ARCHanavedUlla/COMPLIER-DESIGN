@@ -1,0 +1,99 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+typedef enum {
+    IDENTIFIER,
+    INTEGER_CONSTANT,
+    OPERATOR,
+    KEYWORD,
+    SYMBOL,
+    END_OF_FILE
+} TokenType;
+
+typedef struct {
+    TokenType type;
+    char lexeme[100];
+} Token;
+
+Token getNextToken(FILE *sourceCode) {
+    Token token;
+    int c;
+
+    while (isspace(c = fgetc(sourceCode))) {}
+
+    if (c == EOF) {
+        token.type = END_OF_FILE;
+        strcpy(token.lexeme, "EOF");
+        return token;
+    }
+
+    if (isalpha(c) || c == '_') {
+        int i = 0;
+        do {
+            token.lexeme[i++] = c;
+            c = fgetc(sourceCode);
+        } while (isalnum(c) || c == '_');
+        token.lexeme[i] = '\0';
+        if (strcmp(token.lexeme, "int") == 0 || strcmp(token.lexeme, "if") == 0) {
+            token.type = KEYWORD;
+        } else {
+            token.type = IDENTIFIER;
+        }
+
+        ungetc(c, sourceCode);
+        return token;
+    }
+
+    if (isdigit(c)) {
+        int i = 0;
+        do {
+            token.lexeme[i++] = c;
+            c = fgetc(sourceCode);
+        } while (isdigit(c));
+        token.lexeme[i] = '\0';
+        token.type = INTEGER_CONSTANT;
+
+        ungetc(c, sourceCode);
+        return token;
+    }
+
+    if (c == '+' || c == '-' || c == '*' || c == '/') {
+        token.type = OPERATOR;
+        token.lexeme[0] = c;
+        token.lexeme[1] = '\0';
+        return token;
+    }
+    if (c == '(' || c == ')' || c == '{' || c == '}') {
+        token.type = SYMBOL;
+        token.lexeme[0] = c;
+        token.lexeme[1] = '\0';
+        return token;
+    }
+
+    token.type = SYMBOL;
+    token.lexeme[0] = c;
+    token.lexeme[1] = '\0';
+    return token;
+}
+
+int main() {
+    FILE *sourceCode;
+    Token token;
+
+    sourceCode = fopen("source_code.txt", "r");
+    if (sourceCode == NULL) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    do {
+        token = getNextToken(sourceCode);
+        printf("Token Type: %d, Lexeme: %s\n", token.type, token.lexeme);
+    } while (token.type != END_OF_FILE);
+
+    fclose(sourceCode);
+
+    return 0;
+}
